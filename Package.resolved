@@ -3,7 +3,7 @@
     {
       "identity" : "militarysymbologyassets",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/sergpryimachuk/MilitarySymbologyAssets",
+      "location" : "https://github.com/EugeneKuropatenko/MilitarySymbologyAssets",
       "state" : {
         "branch" : "main",
         "revision" : "99e19716e43d6cead9017310864b8ad56969dfdd"
