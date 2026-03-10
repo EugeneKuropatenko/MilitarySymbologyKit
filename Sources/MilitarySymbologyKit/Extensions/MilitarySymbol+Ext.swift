@@ -466,35 +466,35 @@ public extension MilitarySymbol {
     func makeView(size: CGFloat? = nil) -> some View {
         ZStack {
             if let frameAssetName {
-                Image(frameAssetName, bundle: .militarySymbologyAssets)
+                Image(symbolName: frameAssetName)
                     .resizable()
                     .scaledToFit()
             }
 
             if let amplifierAssetName {
-                Image(amplifierAssetName, bundle: .militarySymbologyAssets)
+                Image(symbolName: amplifierAssetName)
                     .resizable()
                     .scaledToFit()
             }
 
             if let hqtfdAssetName {
-                Image(hqtfdAssetName, bundle: .militarySymbologyAssets)
+                Image(symbolName: hqtfdAssetName)
                     .resizable()
                     .scaledToFit()
             }
 
             if let mainIconAssetName {
-                Image(mainIconAssetName, bundle: .militarySymbologyAssets)
+                Image(symbolName: mainIconAssetName)
                     .resizable()
                     .scaledToFit()
             }
 
-            Image(fullFrameMainIconAssetName, bundle: .militarySymbologyAssets)
+            Image(symbolName: fullFrameMainIconAssetName)
                 .resizable()
                 .scaledToFit()
 
             if let ocaAssetName {
-                Image(ocaAssetName, bundle: .militarySymbologyAssets)
+                Image(symbolName: ocaAssetName)
                     .resizable()
                     .scaledToFit()
             }
@@ -509,5 +509,18 @@ public extension MilitarySymbol {
             .frame(width: size)
             .symbolRenderingMode(.hierarchical)
             .foregroundStyle(.orange)
+    }
+}
+
+public extension Image {
+    init(symbolName: String) {
+        let bundle = Bundle.militarySymbologyAssets
+        
+        if let fileURL = bundle.url(forResource: symbolName, withExtension: "svg"),
+           let uiImage = UIImage(contentsOfFile: fileURL.path) {
+            self.init(uiImage: uiImage)
+        } else {
+            self.init(systemName: "exclamationmark.triangle")
+        }
     }
 }
