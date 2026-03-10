@@ -522,12 +522,21 @@ public extension Image {
         }
         
         let bundle = Bundle.militarySymbologyAssets
-        if let fileURL = bundle.url(forResource: symbolName, withExtension: "svg"),
+        if let fileURL = bundle.url(forResource: symbolName, withExtension: "svg", subdirectory: nil),
            let uiImage = UIImage(contentsOfFile: fileURL.path) {
             imageCache.setObject(uiImage, forKey: symbolName as NSString)
             self.init(uiImage: uiImage)
         } else {
-            self.init(systemName: "questionmark.square")
+            if let path = bundle.path(forResource: symbolName, ofType: "svg") {
+                if let uiImage = UIImage(contentsOfFile: path) {
+                    imageCache.setObject(uiImage, forKey: symbolName as NSString)
+                    self.init(uiImage: uiImage)
+                    return
+                }
+            }
+            
+            print("Symbol not found: \(symbolName) in bundle: \(bundle.bundlePath)")
+            self.init(systemName: "questionmark.triangle")
         }
     }
 }
