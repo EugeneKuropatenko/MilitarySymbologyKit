@@ -516,7 +516,6 @@ private var imageCache = NSCache<NSString, UIImage>()
 
 public extension Image {
     init(symbolName: String) {
-        // 1. Перевірка кешу
         if let cached = imageCache.object(forKey: symbolName as NSString) {
             self.init(uiImage: cached)
             return
@@ -525,28 +524,35 @@ public extension Image {
         let bundle = Bundle.militarySymbologyAssets
         let fileManager = FileManager.default
         
-        // 2. Отримуємо всі шляхи (те, що ми бачили в консолі)
-        // subpaths(atPath:) повертає відносні шляхи, наприклад "Frame/Reality/0_610_0.svg"
+        // Отримуємо список усіх файлів у бандлі
         let allPaths = fileManager.subpaths(atPath: bundle.bundlePath) ?? []
         
-        // 3. Шукаємо потрібний файл за іменем
-        // Ми шукаємо шлях, який закінчується на "/symbolName.svg" або дорівнює "symbolName.svg"
-        let targetFileName = "\(symbolName).svg"
-        let foundRelativePath = allPaths.first { path in
-            return path == targetFileName || path.hasSuffix("/" + targetFileName)
+        // Шукаємо файл, ігноруючи регістр та папки
+        let targetLowercased = symbolName.lowercased() + ".svg"
+        
+        let foundPath = allPaths.first { path in
+            let fileName = (path as NSString).lastPathComponent.lowercased()
+            return fileName == targetLowercased
         }
         
-        if let relativePath = foundRelativePath {
-            let fullPath = (bundle.bundlePath as NSString).appendingPathComponent(relativePath)
-            if let uiImage = UIImage(contentsOfFile: fullPath) {
+        if let relativePath = foundPath {
+            // Важливо: будуємо шлях через URL, це надійніше для файлової системи iOS
+            let bundleURL = URL(fileURLWithPath: bundle.bundlePath)
+            let fileURL = bundleURL.appendingPathComponent(relativePath)
+            
+            if let data = try? Data(contentsOf: fileURL),
+               let uiImage = UIImage(data: data) {
                 imageCache.setObject(uiImage, forKey: symbolName as NSString)
                 self.init(uiImage: uiImage)
                 return
             }
         }
         
-        // 4. Фолбек, якщо зовсім нічого не знайшли
-        print("🛑 Symbol NOT FOUND: \(symbolName) | Searched in: \(bundle.bundlePath)")
+        // Якщо не знайшли, виводимо діагностику
+        print("❌ Search failed for: \(symbolName)")
+        print("📍 Bundle path: \(bundle.bundlePath)")
+        print("📦 Total files in bundle: \(allPaths.count)")
+        
         self.init(systemName: "questionmark.diamond")
     }
 }
