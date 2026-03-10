@@ -516,6 +516,7 @@ private var imageCache = NSCache<NSString, UIImage>()
 
 public extension Image {
     init(symbolName: String) {
+        // 1. Перевірка кешу
         if let cached = imageCache.object(forKey: symbolName as NSString) {
             self.init(uiImage: cached)
             return
@@ -524,28 +525,28 @@ public extension Image {
         let bundle = Bundle.militarySymbologyAssets
         let fileManager = FileManager.default
         
-        // Шукаємо файл вручну по всій ієрархії бандла
-        var finalPath: String? = nil
-        if let enumerator = fileManager.enumerator(atPath: bundle.bundlePath) {
-            for case let file as String in enumerator {
-                // Перевіряємо, чи назва файлу (без розширення та папок) збігається
-                let fileNameWithExtension = (file as NSString).lastPathComponent
-                let fileName = (fileNameWithExtension as NSString).deletingPathExtension
-                
-                if fileName == symbolName && fileNameWithExtension.hasSuffix(".svg") {
-                    finalPath = bundle.bundlePath + "/" + file
-                    break
-                }
+        // 2. Отримуємо всі шляхи (те, що ми бачили в консолі)
+        // subpaths(atPath:) повертає відносні шляхи, наприклад "Frame/Reality/0_610_0.svg"
+        let allPaths = fileManager.subpaths(atPath: bundle.bundlePath) ?? []
+        
+        // 3. Шукаємо потрібний файл за іменем
+        // Ми шукаємо шлях, який закінчується на "/symbolName.svg" або дорівнює "symbolName.svg"
+        let targetFileName = "\(symbolName).svg"
+        let foundRelativePath = allPaths.first { path in
+            return path == targetFileName || path.hasSuffix("/" + targetFileName)
+        }
+        
+        if let relativePath = foundRelativePath {
+            let fullPath = (bundle.bundlePath as NSString).appendingPathComponent(relativePath)
+            if let uiImage = UIImage(contentsOfFile: fullPath) {
+                imageCache.setObject(uiImage, forKey: symbolName as NSString)
+                self.init(uiImage: uiImage)
+                return
             }
         }
-
-        if let path = finalPath, let uiImage = UIImage(contentsOfFile: path) {
-            imageCache.setObject(uiImage, forKey: symbolName as NSString)
-            self.init(uiImage: uiImage)
-        } else {
-            print(FileManager.default.subpaths(atPath: bundle.bundlePath) ?? [])
-            print("🛑 CRITICAL: Symbol \(symbolName) NOT FOUND in \(bundle.bundlePath)")
-            self.init(systemName: "questionmark.diamond")
-        }
+        
+        // 4. Фолбек, якщо зовсім нічого не знайшли
+        print("🛑 Symbol NOT FOUND: \(symbolName) | Searched in: \(bundle.bundlePath)")
+        self.init(systemName: "questionmark.diamond")
     }
 }
