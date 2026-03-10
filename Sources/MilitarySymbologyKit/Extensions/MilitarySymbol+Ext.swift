@@ -522,21 +522,30 @@ public extension Image {
         }
         
         let bundle = Bundle.militarySymbologyAssets
-        if let fileURL = bundle.url(forResource: symbolName, withExtension: "svg", subdirectory: nil),
-           let uiImage = UIImage(contentsOfFile: fileURL.path) {
+        let fileManager = FileManager.default
+        
+        // Шукаємо файл вручну по всій ієрархії бандла
+        var finalPath: String? = nil
+        if let enumerator = fileManager.enumerator(atPath: bundle.bundlePath) {
+            for case let file as String in enumerator {
+                // Перевіряємо, чи назва файлу (без розширення та папок) збігається
+                let fileNameWithExtension = (file as NSString).lastPathComponent
+                let fileName = (fileNameWithExtension as NSString).deletingPathExtension
+                
+                if fileName == symbolName && fileNameWithExtension.hasSuffix(".svg") {
+                    finalPath = bundle.bundlePath + "/" + file
+                    break
+                }
+            }
+        }
+
+        if let path = finalPath, let uiImage = UIImage(contentsOfFile: path) {
             imageCache.setObject(uiImage, forKey: symbolName as NSString)
             self.init(uiImage: uiImage)
         } else {
-            if let path = bundle.path(forResource: symbolName, ofType: "svg") {
-                if let uiImage = UIImage(contentsOfFile: path) {
-                    imageCache.setObject(uiImage, forKey: symbolName as NSString)
-                    self.init(uiImage: uiImage)
-                    return
-                }
-            }
-            
-            print("Symbol not found: \(symbolName) in bundle: \(bundle.bundlePath)")
-            self.init(systemName: "questionmark.triangle")
+            print(FileManager.default.subpaths(atPath: bundle.bundlePath) ?? [])
+            print("🛑 CRITICAL: Symbol \(symbolName) NOT FOUND in \(bundle.bundlePath)")
+            self.init(systemName: "questionmark.diamond")
         }
     }
 }
