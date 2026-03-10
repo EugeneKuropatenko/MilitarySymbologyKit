@@ -512,15 +512,22 @@ public extension MilitarySymbol {
     }
 }
 
+private var imageCache = NSCache<NSString, UIImage>()
+
 public extension Image {
     init(symbolName: String) {
-        let bundle = Bundle.militarySymbologyAssets
+        if let cached = imageCache.object(forKey: symbolName as NSString) {
+            self.init(uiImage: cached)
+            return
+        }
         
+        let bundle = Bundle.militarySymbologyAssets
         if let fileURL = bundle.url(forResource: symbolName, withExtension: "svg"),
            let uiImage = UIImage(contentsOfFile: fileURL.path) {
+            imageCache.setObject(uiImage, forKey: symbolName as NSString)
             self.init(uiImage: uiImage)
         } else {
-            self.init(systemName: "exclamationmark.triangle")
+            self.init(systemName: "questionmark.square")
         }
     }
 }
