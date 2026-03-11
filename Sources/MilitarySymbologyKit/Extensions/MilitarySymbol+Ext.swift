@@ -466,35 +466,35 @@ public extension MilitarySymbol {
     func makeView(size: CGFloat? = nil) -> some View {
         ZStack {
             if let frameAssetName {
-                Image(symbolName: frameAssetName)
+                Image(frameAssetName, bundle: .militarySymbologyAssets)
                     .resizable()
                     .scaledToFit()
             }
 
             if let amplifierAssetName {
-                Image(symbolName: amplifierAssetName)
+                Image(amplifierAssetName, bundle: .militarySymbologyAssets)
                     .resizable()
                     .scaledToFit()
             }
 
             if let hqtfdAssetName {
-                Image(symbolName: hqtfdAssetName)
+                Image(hqtfdAssetName, bundle: .militarySymbologyAssets)
                     .resizable()
                     .scaledToFit()
             }
 
             if let mainIconAssetName {
-                Image(symbolName: mainIconAssetName)
+                Image(mainIconAssetName, bundle: .militarySymbologyAssets)
                     .resizable()
                     .scaledToFit()
             }
 
-            Image(symbolName: fullFrameMainIconAssetName)
+            Image(fullFrameMainIconAssetName, bundle: .militarySymbologyAssets)
                 .resizable()
                 .scaledToFit()
 
             if let ocaAssetName {
-                Image(symbolName: ocaAssetName)
+                Image(ocaAssetName, bundle: .militarySymbologyAssets)
                     .resizable()
                     .scaledToFit()
             }
@@ -509,50 +509,5 @@ public extension MilitarySymbol {
             .frame(width: size)
             .symbolRenderingMode(.hierarchical)
             .foregroundStyle(.orange)
-    }
-}
-
-private var imageCache = NSCache<NSString, UIImage>()
-
-public extension Image {
-    init(symbolName: String) {
-        if let cached = imageCache.object(forKey: symbolName as NSString) {
-            self.init(uiImage: cached)
-            return
-        }
-        
-        let bundle = Bundle.militarySymbologyAssets
-        let fileManager = FileManager.default
-        
-        // Отримуємо список усіх файлів у бандлі
-        let allPaths = fileManager.subpaths(atPath: bundle.bundlePath) ?? []
-        
-        // Шукаємо файл, ігноруючи регістр та папки
-        let targetLowercased = symbolName.lowercased() + ".svg"
-        
-        let foundPath = allPaths.first { path in
-            let fileName = (path as NSString).lastPathComponent.lowercased()
-            return fileName == targetLowercased
-        }
-        
-        if let relativePath = foundPath {
-            // Важливо: будуємо шлях через URL, це надійніше для файлової системи iOS
-            let bundleURL = URL(fileURLWithPath: bundle.bundlePath)
-            let fileURL = bundleURL.appendingPathComponent(relativePath)
-            
-            if let data = try? Data(contentsOf: fileURL),
-               let uiImage = UIImage(data: data) {
-                imageCache.setObject(uiImage, forKey: symbolName as NSString)
-                self.init(uiImage: uiImage)
-                return
-            }
-        }
-        
-        // Якщо не знайшли, виводимо діагностику
-        print("❌ Search failed for: \(symbolName)")
-        print("📍 Bundle path: \(bundle.bundlePath)")
-        print("📦 Total files in bundle: \(allPaths.count)")
-        
-        self.init(systemName: "questionmark.diamond")
     }
 }
